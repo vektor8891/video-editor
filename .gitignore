@@ -1,4 +1,44 @@
-.idea/
-input/
-output/
+# raw video files
+*.mp4
+
+# temp excel files
 *.xlsx#
+
+# temp python files
+.pyc
+/.idea/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Sphinx documentation
+docs/_build/
+
+# Environments
+/venv/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode
+
+# Unit test / coverage input
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
