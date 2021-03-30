@@ -1,4 +1,0 @@
-file 'input/intro.mp4'
-file 'output/raw/video03_clip01.mp4'
-file 'input/call-to-action-up.mp4'
-file 'input/outro.mp4'
