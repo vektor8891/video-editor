@@ -9,10 +9,12 @@ from typing import Tuple, Union
 VALID_EXTENSIONS = ['mp4']
 
 
-def run_command(cmd: str) -> Tuple[str, str]:
+def run_command(cmd: str) -> str:
     process = s.Popen(cmd.split(), stdout=s.PIPE, stderr=s.PIPE)
     output, error = process.communicate()
-    return output.decode("utf-8").strip(), error.decode("utf-8")
+    if error != b'':
+        raise ValueError(error.decode("utf-8"))
+    return output.decode("utf-8").strip()
 
 
 def check_extension(f_path: Union[os.PathLike, str]) -> bool:

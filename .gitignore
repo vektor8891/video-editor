@@ -1,4 +1,5 @@
-# raw video files
+# video files
+data/videos/
 *.mp4
 
 # temp excel files
@@ -28,7 +29,7 @@ dmypy.json
 # VS Code
 .vscode
 
-# Unit test / coverage input
+# Unit test / coverage videos
 htmlcov/
 .tox/
 .nox/

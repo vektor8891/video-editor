@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
-import editor.dataframe as d
+import editor.clips as c
 
-df_clips = d.read_clips_data()
+df_clips = c.read_clips_data()
 
-ids = [1]
+videos = [1]
 
-for id in ids:
-    clip = d.get_clip_data(df_clips, id)
+for video_id in videos:
+    clips = c.get_clips(df_clips, video_id)
+    file_names = []
+    for i, row in clips.iterrows():
+        trimmed_file = c.trim_clip(row)
+        file_names.append(trimmed_file)
 
 pass

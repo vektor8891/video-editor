@@ -1,27 +1,32 @@
 #!/usr/bin/env python
 
+from typing import Union
+
 import pandas as pd
-import os
 
 
-def has_column(df: pd.DataFrame, column: str, raise_error=False) -> bool:
-    has_col = column in df.columns
-    if raise_error and not has_col:
-        raise ValueError(f"Column '{column}' not found!")
-    return has_col
+def has_column(df: Union[pd.DataFrame, pd.Series], column: str,
+               raise_error=False) -> bool:
+    if isinstance(df, pd.core.series.Series):
+        df_new = df.to_frame()
+        if len(df_new.index) > 0:
+            df_new = df_new.transpose()
+        return has_column(df_new, column, raise_error)
+    else:
+        has_col = column in df.columns
+        if raise_error and not has_col:
+            raise ValueError(f"Column '{column}' not found!")
+        return has_col
 
 
-def read_clips_data(folder='data', f_name='clips.csv') -> pd.DataFrame:
-    f_path = os.path.join(folder, f_name)
-    df = pd.read_csv(f_path)
-    return df
+def has_columns(df: Union[pd.DataFrame, pd.Series], columns: list,
+                raise_error=False) -> bool:
+    return all([has_column(df, c, raise_error) for c in columns])
 
 
-def get_clip_data(df_clip: pd.DataFrame, clip_id: int) -> pd.Series:
-    has_column(df_clip, 'Id', raise_error=True)
-    df_filter = df_clip[df_clip['Id'] == clip_id]
-    if df_filter.empty:
-        raise ValueError(f"Clip ID {clip_id} not found!")
-    elif len(df_filter.index) > 1:
-        raise ValueError(f"Multiple clips found with ID {clip_id}!")
-    return df_filter.iloc[0]
+def has_duplicates(df: pd.DataFrame, column: str, raise_error=False) -> bool:
+    df_duplicate = df[df.duplicated([column])]
+    has_duplicate = not df_duplicate.empty
+    if has_duplicate & raise_error:
+        raise ValueError(f"Duplicates found in '{column}':", df_duplicate)
+    return has_duplicate

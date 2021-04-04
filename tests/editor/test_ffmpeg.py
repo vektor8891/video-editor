@@ -8,12 +8,12 @@ import os
 def test_run_command(tmp_path):
     # it should run command
     text = "Hello World"
-    assert ff.run_command(f"echo {text}") == (text, '')
+    assert ff.run_command(f"echo {text}") == text
     # it should return error properly
     f_path = tmp_path / "unknown.txt"
-    output, error = ff.run_command(f"cat {f_path}")
-    assert output == ''
-    assert error != ''
+    with pytest.raises(ValueError) as context_info:
+        ff.run_command(f"cat {f_path}")
+    assert f"{f_path}" in str(context_info.value)
 
 
 def test_check_extension():
@@ -42,13 +42,13 @@ def test_check_time_format():
         assert f"Incorrect time format: '{t}'" in str(context_info.value)
 
 
-def test(tmp_path):
+def test_trim_video_cmd(tmp_path):
     f_missing = tmp_path / 'unknown.txt'
-    # it should raise error if input file doesn't exist
+    # it should raise error if videos file doesn't exist
     with pytest.raises(ValueError) as context_info:
         ff.trim_video_cmd(f_missing, '', '', '')
     assert "Input file does not exist" in str(context_info.value)
-    # it should raise error if input file has invalid extension
+    # it should raise error if videos file has invalid extension
     f_bad = tmp_path / 'test.avi'
     os.mknod(f_bad)
     with pytest.raises(ValueError) as context_info:

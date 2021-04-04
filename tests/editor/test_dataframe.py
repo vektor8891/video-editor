@@ -7,38 +7,39 @@ import editor.dataframe as d
 
 
 def test_has_column():
-    df = pd.DataFrame(data={"Col": ["Value"]})
+    df = pd.DataFrame(columns=["Col"])
+    sr = pd.Series(name='Col')
     # it should return True if column exist
     assert d.has_column(df, "Col")
+    assert d.has_column(sr, "Col")
     # it should return False if column doesn't exist
     assert not d.has_column(df, "Unknown")
+    assert not d.has_column(sr, "Unknown")
     # it should throw error if column is missing and error flag is on
     with pytest.raises(ValueError) as context_info:
         d.has_column(df, "Unknown", True)
     assert "Column 'Unknown' not found" in str(context_info.value)
-
-
-def test_read_clips_data(tmp_path):
-    f_name = "test.csv"
-    f_path = tmp_path / f_name
-    df = pd.DataFrame(data={"Col": ["A"]})
-    df.to_csv(f_path, index=False)
-    assert d.read_clips_data(tmp_path, f_name).equals(df)
-
-
-def test_get_clip_data():
-    # it should raise error if 'Id' column is missing
     with pytest.raises(ValueError) as context_info:
-        d.get_clip_data(pd.DataFrame(), 1)
-    assert "Column 'Id' not found" in str(context_info.value)
-    # it should raise error if ID is missing
+        d.has_column(sr, "Unknown", True)
+    assert "Column 'Unknown' not found" in str(context_info.value)
+
+
+def test_has_columns():
+    df = pd.DataFrame(columns=['Name', 'Age'])
+    # it should return True if every column exist
+    assert d.has_columns(df, ["Name", "Age"])
+    # it should return False if any column is missing
+    assert not d.has_columns(df, ["Name", "Unknown"])
+    # it should throw error if any column is missing and error flag is on
     with pytest.raises(ValueError) as context_info:
-        d.get_clip_data(pd.DataFrame(data={'Id': [0]}), 1)
-    assert "Clip ID 1 not found!" in str(context_info.value)
-    # it should raise error if IDs are not unique
+        d.has_columns(df, ["Name", "Unknown"], True)
+    assert "Column 'Unknown' not found" in str(context_info.value)
+
+
+def test_has_duplicates():
+    df = pd.DataFrame(data={"Name": ["Alex", "Eve"], "Age": [12, 14]})
+    assert not d.has_duplicates(df, "Name", raise_error=True)
+    df_duplicate = df.copy().append(df)
     with pytest.raises(ValueError) as context_info:
-        d.get_clip_data(pd.DataFrame(data={'Id': [1, 1]}), 1)
-    assert "Multiple clips found with ID 1!" in str(context_info.value)
-    # it should return clip data
-    df = pd.DataFrame(data={'Id': [1], 'Col': ['Value']})
-    assert d.get_clip_data(df, 1).equals(df.iloc[0])
+        d.has_duplicates(df_duplicate, "Name", raise_error=True)
+    assert "Duplicates found in 'Name'" in str(context_info.value)
