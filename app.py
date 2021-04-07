@@ -12,5 +12,4 @@ for video_id in videos:
     for i, row in clips.iterrows():
         trimmed_file = c.trim_clip(row)
         file_names.append(trimmed_file)
-
 pass

@@ -67,16 +67,15 @@ def test_get_output_file_path(tmp_path, mocker):
 
 
 def test_trim_clip(mocker):
-    # it should raise error if columns are missing
-    df = pd.DataFrame(data={
-        'Id': [1],
-        'FileName': ['test.mp4'],
+    mocker.patch("editor.dataframe.has_columns", return_value=True)
+    mocker.patch("editor.clips.get_input_file_path", return_value='in.mp4')
+    mocker.patch("editor.clips.get_output_file_path", return_value='out.mp4')
+    mocker.patch("editor.ffmpeg.trim_video_cmd", return_value='cmd')
+    mocker.patch("editor.ffmpeg.run_command", return_value=True)
+    row = pd.Series(data={
+        'Id': [0],
+        'FileName': ['f'],
         'TimeStart': ['00:00:00'],
-        'TimeEnd': ['00:00:01']
+        'TimeEnd': ['00:00:01'],
     })
-    for col in df.columns:
-        df_missing = df.copy()
-        del df_missing[col]
-        with pytest.raises(ValueError) as context_info:
-            c.trim_clip(df_missing.iloc[0])
-        assert f"Column '{col}' not found" in str(context_info.value)
+    assert c.trim_clip(row) == 'out.mp4'

@@ -16,6 +16,29 @@ def test_run_command(tmp_path):
     assert f"{f_path}" in str(context_info.value)
 
 
+def test_check_existing_file(tmp_path):
+    f_missing = tmp_path / 'unknown.txt'
+    # it should raise error if videos file doesn't exist
+    with pytest.raises(ValueError) as context_info:
+        ff.check_existing_file(f_missing)
+    assert "Input file does not exist" in str(context_info.value)
+    # it should return true if file exists
+    f_valid = tmp_path / 'file.txt'
+    os.mknod(f_valid)
+    assert ff.check_existing_file(f_valid)
+
+
+def test_delete_existing_file(tmp_path):
+    f_missing = tmp_path / 'unknown.txt'
+    # it should return false if file doesn't exist
+    assert not ff.delete_existing_file(f_missing)
+    # it should delete existing file and return true
+    f_valid = tmp_path / 'file.txt'
+    os.mknod(f_valid)
+    assert ff.delete_existing_file(f_valid)
+    assert not os.path.isfile(f_valid)
+
+
 def test_check_extension():
     # it should work for files with valid extensions
     f_correct = os.path.join('folder', 'video.mp4')
@@ -30,55 +53,59 @@ def test_check_extension():
     assert "Unknown extension: 'avi'" in str(context_info.value)
 
 
-def test_check_time_format():
+def test_get_video_length_cmd(mocker):
+    mocker.patch("editor.ffmpeg.check_existing_file", return_value=True)
+    f_path = 'test.mp4'
+    cmd = f'ffprobe -i {f_path} -show_entries format=duration -v quiet ' \
+          f'-of csv="p=0"'
+    assert ff.get_video_length_cmd(f_path) == cmd
+
+
+def test_get_video_length(mocker):
+    mocker.patch("editor.ffmpeg.get_video_length_cmd", return_value='')
+    mocker.patch("editor.ffmpeg.run_command", return_value=100)
+    f_path = 'test.mp4'
+    assert ff.get_video_length(f_path) == 100
+
+
+def test_get_seconds():
     # it should work for correct time formats
     t_correct = '00:02:13'
-    assert ff.check_time_format(t_correct)
+    assert ff.get_seconds(t_correct) == 133
     # it should raise error if time not formatted correctly
     t_incorrect = ['4:5', '0:23:12', '00:99:99']
     for t in t_incorrect:
         with pytest.raises(ValueError) as context_info:
-            ff.check_time_format(t)
+            ff.get_seconds(t)
         assert f"Incorrect time format: '{t}'" in str(context_info.value)
 
 
-def test_trim_video_cmd(tmp_path):
-    f_missing = tmp_path / 'unknown.txt'
-    # it should raise error if videos file doesn't exist
+def test_check_time_stamps(mocker):
+    mocker.patch("editor.ffmpeg.get_video_length", return_value=60)
+    # it should work return true if time stamps are in order
+    f_path = 'test.mp4'
+    assert ff.check_time_stamps(f_path, '00:00:01', '00:00:02')
+    # it should raise error if time stamps are not in order
     with pytest.raises(ValueError) as context_info:
-        ff.trim_video_cmd(f_missing, '', '', '')
-    assert "Input file does not exist" in str(context_info.value)
-    # it should raise error if videos file has invalid extension
-    f_bad = tmp_path / 'test.avi'
-    os.mknod(f_bad)
+        ff.check_time_stamps(f_path, '00:00:02', '00:00:01')
+    assert "Ending time (00:00:01) is after start time (00:00:02)"\
+           in str(context_info.value)
+    # it should raise error if end time is too long
     with pytest.raises(ValueError) as context_info:
-        ff.trim_video_cmd(f_bad, '', '', '')
-    assert "Unknown extension: 'avi'" in str(context_info.value)
-    # it should raise error if output file has invalid extension
-    f_in = tmp_path / 'test_in.mp4'
-    f_bad = tmp_path / 'test.mov'
-    os.mknod(f_in)
-    with pytest.raises(ValueError) as context_info:
-        ff.trim_video_cmd(f_in, f_bad, '', '')
-    assert "Unknown extension: 'mov'" in str(context_info.value)
-    # it should raise error if starting time stamp has incorrect format
-    f_out = tmp_path / 'test_out.mp4'
-    os.mknod(f_out)
-    t_bad = "4:5"
-    with pytest.raises(ValueError) as context_info:
-        ff.trim_video_cmd(f_in, f_out, t_bad, '')
-    assert "Incorrect time format: '4:5'" in str(context_info.value)
-    # it should raise error if ending time stamp has incorrect format
-    t_start = '00:12:56'
-    with pytest.raises(ValueError) as context_info:
-        ff.trim_video_cmd(f_in, f_out, t_start, t_bad)
-    assert "Incorrect time format: '4:5'" in str(context_info.value)
-    # it should raise error if ending time is before ending time
-    t_end = '00:15:56'
-    with pytest.raises(ValueError) as context_info:
-        ff.trim_video_cmd(f_in, f_out, t_end, t_start)
-    assert f"Ending time ({t_start}) is after start time ({t_end})" in\
-           str(context_info.value)
+        ff.check_time_stamps(f_path, '00:00:00', '00:02:00')
+    assert f"Ending time (00:02:00) is longer then video length " \
+           f"({f_path} - 60 s)" in str(context_info.value)
+
+
+def test_trim_video_cmd(tmp_path, mocker):
+    mocker.patch("editor.ffmpeg.check_existing_file", return_value=True)
+    mocker.patch("editor.ffmpeg.delete_existing_file", return_value=False)
+    mocker.patch("editor.ffmpeg.check_extension", return_value=True)
+    mocker.patch("editor.ffmpeg.check_time_stamps", return_value=True)
     # it should return command if everything is correct
+    f_in = "in.mp4"
+    f_out = "out.mp4"
+    t_start = '00:12:56'
+    t_end = '00:15:56'
     assert ff.trim_video_cmd(f_in, f_out, t_start, t_end) == \
            f'ffmpeg -ss {t_start} -i {f_in} -t {t_end} -c copy {f_out}'
