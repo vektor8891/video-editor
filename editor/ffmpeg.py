@@ -80,10 +80,16 @@ def check_time_stamps(f_in: Union[os.PathLike, str], t_start: str,
 
 
 def trim_video_cmd(f_in: Union[os.PathLike, str], f_out: Union[os.PathLike, str],
-                   t_start: str, t_end: str):
+                   t_start: str, t_end: str) -> str:
     check_existing_file(f_in)
     delete_existing_file(f_out)
     check_extension(f_in)
     check_extension(f_out)
     check_time_stamps(f_in, t_start, t_end)
     return f'ffmpeg -ss {t_start} -i {f_in} -t {t_end} -c copy {f_out}'
+
+
+def merge_videos_cmd(files_path: str, f_out: str) -> str:
+    check_existing_file(files_path)
+    delete_existing_file(f_out)
+    return f'ffmpeg -f concat -safe 0 -i {files_path} -c copy {f_out}'

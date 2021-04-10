@@ -2,7 +2,7 @@
 
 import editor.clips as c
 
-df_clips = c.read_clips_data()
+df_clips = c.read_media_data()
 
 videos = [1]
 
@@ -12,4 +12,5 @@ for video_id in videos:
     for i, row in clips.iterrows():
         trimmed_file = c.trim_clip(row)
         file_names.append(trimmed_file)
+    c.merge_clips(file_names, video_id)
 pass

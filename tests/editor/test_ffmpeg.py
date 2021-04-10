@@ -97,7 +97,7 @@ def test_check_time_stamps(mocker):
            f"({f_path} - 60 s)" in str(context_info.value)
 
 
-def test_trim_video_cmd(tmp_path, mocker):
+def test_trim_video_cmd(mocker):
     mocker.patch("editor.ffmpeg.check_existing_file", return_value=True)
     mocker.patch("editor.ffmpeg.delete_existing_file", return_value=False)
     mocker.patch("editor.ffmpeg.check_extension", return_value=True)
@@ -109,3 +109,13 @@ def test_trim_video_cmd(tmp_path, mocker):
     t_end = '00:15:56'
     assert ff.trim_video_cmd(f_in, f_out, t_start, t_end) == \
            f'ffmpeg -ss {t_start} -i {f_in} -t {t_end} -c copy {f_out}'
+
+
+def test_merge_videos_cmd(tmp_path, mocker):
+    mocker.patch("editor.ffmpeg.check_existing_file", return_value=True)
+    mocker.patch("editor.ffmpeg.delete_existing_file", return_value=False)
+    # it should return command if everything is correct
+    f_path = "files.txt"
+    f_out = "out.mp4"
+    assert ff.merge_videos_cmd(f_path, f_out) == \
+           f'ffmpeg -f concat -safe 0 -i {f_path} -c copy {f_out}'
