@@ -9,9 +9,11 @@ import editor.dataframe as d
 def test_has_column():
     df = pd.DataFrame(columns=["Col"])
     sr = pd.Series(name='Col')
+    sr_multi = pd.Series(data={"Col1": ['A'], "Col2": ['B']})
     # it should return True if column exist
     assert d.has_column(df, "Col")
     assert d.has_column(sr, "Col")
+    assert d.has_column(sr_multi, "Col1")
     # it should return False if column doesn't exist
     assert not d.has_column(df, "Unknown")
     assert not d.has_column(sr, "Unknown")
