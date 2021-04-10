@@ -10,7 +10,7 @@ VALID_EXTENSIONS = ['mp4']
 
 
 def run_command(cmd: str) -> str:
-    process = s.Popen(cmd.split(), stdout=s.PIPE, stderr=s.PIPE)
+    process = s.Popen(cmd, shell=True, stdout=s.PIPE, stderr=s.PIPE)
     output, error = process.communicate()
     if error != b'':
         error_str = error.decode("utf-8")
@@ -49,9 +49,10 @@ def get_video_length_cmd(f_path: Union[os.PathLike, str]) -> str:
     return cmd
 
 
-def get_video_length(f_path: Union[os.PathLike, str]) -> int:
+def get_video_length(f_path: Union[os.PathLike, str]) -> float:
     cmd = get_video_length_cmd(f_path)
-    video_length = int(run_command(cmd))
+    output = run_command(cmd)
+    video_length = round(float(output if output != '' else 0), 2)
     return video_length
 
 
