@@ -91,3 +91,13 @@ def merge_clips(f_list: list, video_id: int, input_files_path='temp.txt') -> str
     ff.run_command(cmd)
     ff.delete_existing_file(input_files_path)
     return f_out
+
+
+def add_audio(f_in: str, video_id: int) -> str:
+    f_name = get_video(video_id, "Name")
+    f_out = get_output_file_path(f_name, suffix="sound")
+    ff.delete_existing_file(f_out)
+    f_audio = os.path.join(get_input_folder(), 'bensound-smallguitar.mp3')
+    cmd = ff.add_audio_cmd(f_in, f_audio, f_out, fade_out=2)
+    ff.run_command(cmd)
+    return f_out

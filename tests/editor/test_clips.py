@@ -126,7 +126,7 @@ def test_write_input_files(tmp_path):
             assert line.strip() == f"file '{f_list[i]}'"
 
 
-def test(mocker, tmp_path):
+def test_merge_clips(mocker, tmp_path):
     f_input_list = 'list.txt'
     # create dummy input list file
     if not os.path.isfile(f_input_list):
@@ -141,3 +141,13 @@ def test(mocker, tmp_path):
     assert c.merge_clips([], 1, f_input_list) == f_out
     # it should delete input list file
     assert not os.path.isfile(f_input_list)
+
+
+def test_add_audio(mocker):
+    f_out = 'out.mp4'
+    mocker.patch("editor.clips.get_video", return_value=f_out)
+    mocker.patch("editor.clips.get_output_file_path", return_value=f_out)
+    mocker.patch("editor.ffmpeg.add_audio_cmd", return_value='cmd')
+    mocker.patch("editor.ffmpeg.run_command", return_value=True)
+    mocker.patch("editor.ffmpeg.delete_existing_file", return_value=True)
+    assert c.add_audio('in.mp4', 1) == f_out

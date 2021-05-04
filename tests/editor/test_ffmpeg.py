@@ -119,3 +119,17 @@ def test_merge_videos_cmd(tmp_path, mocker):
     f_out = "out.mp4"
     assert ff.merge_videos_cmd(f_path, f_out) == \
            f'ffmpeg -f concat -safe 0 -i {f_path} -c copy {f_out}'
+
+
+def test_add_audio_cmd(mocker):
+    mocker.patch("editor.ffmpeg.get_video_length", return_value=100)
+    f_in = 'in.mp4'
+    f_audio = 'audio.mp3'
+    f_out = 'out.mp4'
+    assert ff.add_audio_cmd(f_in, f_audio, f_out) == \
+           f'ffmpeg -i {f_in} -i {f_audio} -vcodec copy -acodec copy ' \
+           f'-map 0:v:0 -map 1:a:0 -shortest {f_out}'
+    assert ff.add_audio_cmd(f_in, f_audio, f_out, 5) == \
+           f'ffmpeg -i {f_in} -i {f_audio} -vcodec copy ' \
+           f'-af "afade=t=out:st=95:d=5" -map 0:v:0 -map 1:a:0' \
+           f' -shortest {f_out}'

@@ -93,3 +93,14 @@ def merge_videos_cmd(files_path: str, f_out: str) -> str:
     check_existing_file(files_path)
     delete_existing_file(f_out)
     return f'ffmpeg -f concat -safe 0 -i {files_path} -c copy {f_out}'
+
+
+def add_audio_cmd(f_in: str, f_audio: str, f_out: str, fade_out=0):
+    a_filter = '-acodec copy'
+    if fade_out > 0:
+        video_length = round(get_video_length(f_in))
+        video_length_mod = video_length - fade_out
+        a_filter = f'-af "afade=t=out:st={video_length_mod}:d={fade_out}"'
+    return f'ffmpeg -i {f_in} -i {f_audio} -vcodec copy {a_filter} -map ' \
+           f'0:v:0 -map 1:a:0 -shortest {f_out}'
+
