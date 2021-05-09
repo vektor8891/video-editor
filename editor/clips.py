@@ -43,29 +43,31 @@ def get_input_folder() -> str:
     return os.path.join('data', 'videos')
 
 
-def get_input_file_path(f_name: str) -> str:
+def get_input_file_path(f_name: str, folder='') -> str:
     input_folder = get_input_folder()
-    return os.path.join(input_folder, 'raw', f_name)
+    return os.path.join(input_folder, folder, f_name)
 
 
-def get_output_file_path(file_name: str, suffix=None) -> str:
+def get_output_file_path(file_name: str, suffix=None, folder='temp') -> str:
     input_folder = get_input_folder()
     f_name, f_ext = os.path.splitext(file_name)
-    if isinstance(suffix, int):
-        f_suffix = str(suffix).zfill(2)
+    if suffix is None or suffix == '':
+        f_suffix = ''
+    elif isinstance(suffix, int):
+        f_suffix = '_' + str(suffix).zfill(2)
     elif isinstance(suffix, str):
-        f_suffix = suffix
+        f_suffix = '_' + suffix
     else:
         raise ValueError(f'Invalid file suffix: {str(suffix)}')
-    f_name_full = f'{f_name}_{f_suffix}{f_ext}'
-    return os.path.join(input_folder, 'temp', f_name_full)
+    f_name_full = f'{f_name}{f_suffix}{f_ext}'
+    return os.path.join(input_folder, folder, f_name_full)
 
 
 def trim_clip(row: pd.Series) -> str:
     d.has_columns(row, ['Id', 'FileName', 'TimeStart', 'TimeEnd'],
                   raise_error=True)
     f_name = row['FileName']
-    f_in = get_input_file_path(f_name)
+    f_in = get_input_file_path(f_name, folder='raw')
     f_out = get_output_file_path(f_name, suffix=row['Id'])
     trim_cmd = ff.trim_video_cmd(f_in, f_out,
                                  t_start=row['TimeStart'],
@@ -83,10 +85,10 @@ def write_input_files(f_list: list, input_files_path: str) -> bool:
     return True
 
 
-def merge_clips(f_list: list, video_id: int, input_files_path='temp.txt') -> str:
+def merge_clips(f_list: list, video_id: int, input_files_path='temp.txt', suffix='merged', output_folder='temp') -> str:
     write_input_files(f_list, input_files_path)
     f_name = get_video(video_id, "Name")
-    f_out = get_output_file_path(f_name, suffix="merged")
+    f_out = get_output_file_path(f_name, suffix, output_folder)
     cmd = ff.merge_videos_cmd(input_files_path, f_out)
     ff.run_command(cmd)
     ff.delete_existing_file(input_files_path)
@@ -100,4 +102,13 @@ def add_audio(f_in: str, video_id: int) -> str:
     f_audio = os.path.join(get_input_folder(), 'bensound-smallguitar.mp3')
     cmd = ff.add_audio_cmd(f_in, f_audio, f_out, fade_out=2)
     ff.run_command(cmd)
+    return f_out
+
+
+def add_intro_outro(f_in: str, video_id: int) -> str:
+    f_intro = get_input_file_path('intro.mp4')
+    f_action = get_input_file_path('action.mp4')
+    f_outro = get_input_file_path('outro.mp4')
+    video_list = [f_intro, f_in, f_action, f_outro]
+    f_out = merge_clips(video_list, video_id, suffix='', output_folder='final')
     return f_out

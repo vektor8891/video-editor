@@ -77,13 +77,21 @@ def test_get_input_folder():
 def test_get_input_file_path(tmp_path, mocker):
     mocker.patch("editor.clips.get_input_folder", return_value=tmp_path)
     f_name = 'test.txt'
-    f_path = tmp_path / 'raw' / f_name
+    f_path = tmp_path / f_name
     assert c.get_input_file_path(f_name) == str(f_path)
+    folder_name = 'test_folder'
+    f_path_folder = tmp_path / folder_name / f_name
+    assert c.get_input_file_path(f_name, folder_name) == str(f_path_folder)
+
 
 
 def test_get_output_file_path(tmp_path, mocker):
     mocker.patch("editor.clips.get_input_folder", return_value=tmp_path)
     f_name = 'test.txt'
+    # it should work without suffix
+    f_path = tmp_path / 'temp' / f_name
+    assert c.get_output_file_path(f_name) == str(f_path)
+    assert c.get_output_file_path(f_name, '') == str(f_path)
     # it should work for integers
     f_name_int = 'test_01.txt'
     f_path_int = tmp_path / 'temp' / f_name_int
@@ -151,3 +159,10 @@ def test_add_audio(mocker):
     mocker.patch("editor.ffmpeg.run_command", return_value=True)
     mocker.patch("editor.ffmpeg.delete_existing_file", return_value=True)
     assert c.add_audio('in.mp4', 1) == f_out
+
+
+def test_add_intro_outro(mocker):
+    f_out = 'out.mp4'
+    mocker.patch("editor.clips.get_input_file_path", return_value=f_out)
+    mocker.patch("editor.clips.merge_clips", return_value=f_out)
+    assert c.add_intro_outro('in.mp4', 1) == f_out

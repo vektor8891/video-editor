@@ -14,4 +14,5 @@ for video_id in videos:
         file_names.append(trimmed_file)
     merged_file = c.merge_clips(file_names, video_id)
     audio_file = c.add_audio(merged_file, video_id)
+    final_file = c.add_intro_outro(audio_file, video_id)
 pass
